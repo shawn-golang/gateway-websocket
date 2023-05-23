@@ -38,3 +38,22 @@ gateway-websocket中有三个重要的概念 `client-客户端`，`user-用户`�
         和user类似，group是用来将不同的client加入到某群组中进行消息通讯
 
 
+## 调用gateway-websocket提供的接口
+
+gateway-websocket在设计之初就考虑到了其他开发语言调用接口的问题，所以gateway-websocket为大家提供了`gRPC`接口
+
+| 接口名称 | 用途                                                                         | 归属分类             |
+|--------------| ----------------------------------------------------------------------------------------- |----------------------|
+| BroadcastMessage      | 向所有client广播消息                                           | client    |
+| SendMessageToClient     | 向某个client发送消息                                                                  | client   |
+| ClonseClient   | 关闭某个client的连接                                                             | client |
+| GetAllOnlineClient    | 获取所有在线客户端                                                 | client  |
+| ClientIsOnline    | 判断client是否在线                                                            | client  |
+| CountOnlineClient      | 统计在线client数量                                                                 | client   |
+| UnGroup     | 解散某个群组                                        | group   |
+| SendMessageToGroup      | 向某个群组发送消息                                                                  | group    |
+| CountOnlineGroup     | 统计群组内在线的client数量              | group   |
+| CountGroup     | 统计群组数量                           | group   |
+| GetGroupOnlineClient    | 获取群组内所有在线的client                     | group  |
+| LeaveGroup      | 将client移出群组                                                              | group   |
+| JoinGroup    | 将client加入群组 | group  |
