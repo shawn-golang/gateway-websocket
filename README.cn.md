@@ -57,3 +57,11 @@ gateway-websocket在设计之初就考虑到了其他开发语言调用接口的
 | GetGroupOnlineClient    | 获取群组内所有在线的client                     | group  |
 | LeaveGroup      | 将client移出群组                                                              | group   |
 | JoinGroup    | 将client加入群组 | group  |
+| GetUidByClient    | 获取Uid下所有client | user  |
+| CountOnlineUid    | 统计在线uid人数 | user  |
+| GetAllOnlineUid    | 获取所有在线uid | user  |
+| SendMessageToUid    | 向某个uid下绑定的所有client发送消息 | user  |
+| UidIsOnline    | 判断某个uid是否存在 | user  |
+| UnBindUid    | client解除绑定Uid | user  |
+| ClientBindUid    | client绑定Uid | user  |
+| GetClientByUid    | 获取client绑定的Uid | user  |
