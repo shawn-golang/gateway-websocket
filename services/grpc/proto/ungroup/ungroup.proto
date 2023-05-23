@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package="./;proto";
+package proto;
+
+service UnGroup {
+
+	rpc UnGroup(UnGroupRequest) returns (UnGroupResponse) {}
+}
+
+message UnGroupRequest {
+    string  group        = 1;
+}
+
+message UnGroupResponse {
+    bool    result         = 1;
+}

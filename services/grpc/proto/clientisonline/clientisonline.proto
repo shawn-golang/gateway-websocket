@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package="./;proto";
+package proto;
+
+service ClientIsOnline {
+
+	rpc ClientIsOnline(ClientIsOnlineRequest) returns (ClientIsOnlineResponse) {}
+}
+
+message ClientIsOnlineRequest {
+    string clientid         = 1;
+}
+
+message ClientIsOnlineResponse {
+    bool   isonline 		= 1;
+}

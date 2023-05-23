@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package="./;proto";
+package proto;
+
+service CountOnlineClient {
+
+	rpc CountOnlineClient(CountOnlineClientRequest) returns (CountOnlineClientResponse) {}
+}
+
+message CountOnlineClientRequest {}
+
+message CountOnlineClientResponse {
+    int32 		count 		= 1;
+}

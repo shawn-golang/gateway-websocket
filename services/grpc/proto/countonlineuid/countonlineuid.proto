@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package="./;proto";
+package proto;
+
+service CountOnlineUid {
+
+	rpc CountOnlineUid(CountOnlineUidRequest) returns (CountOnlineUidResponse) {}
+}
+
+message CountOnlineUidRequest {}
+
+message CountOnlineUidResponse {
+    int32    count         = 1;
+}

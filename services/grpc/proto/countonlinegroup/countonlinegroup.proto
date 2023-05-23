@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package="./;proto";
+package proto;
+
+service CountOnlineGroup {
+
+	rpc CountOnlineGroup(CountOnlineGroupRequest) returns (CountOnlineGroupResponse) {}
+}
+
+message CountOnlineGroupRequest {
+    string group        =   1;
+}
+
+message CountOnlineGroupResponse {
+    int32 		count 		= 1;
+}

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <button class="closeConnect">关闭ws链接</button>
+</body>
+<script src="./script/reconnecting-websocket.js"></script>
+<script src="./script/reconnecting-websocket.min.js"></script>
+<script src="./script/jquery.min.js"></script>
+
+<script>
+
+    $(function(){
+
+        // 创建 WebSocket 连接
+        var ws = new WebSocket("ws://127.0.0.1:8181/wss");
+
+        // 监听连接打开事件
+        ws.onopen = function() {
+            
+            console.log("WebSocket 连接已打开");
+        
+        };
+
+        // 监听收到消息事件
+        ws.onmessage = function(event) {
+
+            console.log("收到消息: " + event.data+ ", 打印时间: " + new Date().getTime());
+        
+        };
+
+        // 监听连接关闭事件
+        ws.onclose = function() {
+
+            console.log("WebSocket 连接已关闭。时间: "+ new Date().getTime());
+        };
+
+        setInterval(function() {
+
+            if (ws.readyState === WebSocket.OPEN) {
+                ws.send('ping');
+            }else{
+                console.log("服务已断开 时间: "+new Date().getTime() )
+            }
+        }, 15000);
+
+
+        $('.closeConnect').on('click', function(){
+
+            ws.close();
+        })
+
+    })
+
+</script>
+</html>

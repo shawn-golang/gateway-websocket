@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package="./;proto";
+package proto;
+
+service CountGroup {
+
+	rpc CountGroup(CountGroupRequest) returns (CountGroupResponse) {}
+}
+
+message CountGroupRequest {}
+
+message CountGroupResponse {
+    int32 		count 		= 1;
+}

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package="./;proto";
+package proto;
+
+service SendMessageToClient {
+
+	rpc SendMessageToClient(SendMessageToClientRequest) returns (SendMessageToClientResponse) {}
+}
+
+message SendMessageToClientRequest {
+    string  clientid        = 1;
+    string  message         = 2;
+}
+
+message SendMessageToClientResponse {
+    bool   result 		= 1;
+}

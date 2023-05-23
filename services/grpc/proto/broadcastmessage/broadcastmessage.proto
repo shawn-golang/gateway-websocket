@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package="./;proto";
+package proto;
+
+service BroadcastMessage {
+
+	rpc BroadcastMessage(BroadcastMessageRequest) returns (BroadcastMessageResponse) {}
+}
+
+message BroadcastMessageRequest {
+    string  message        = 1;
+}
+
+message BroadcastMessageResponse {
+    bool    result         = 1;
+}

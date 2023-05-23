@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package="./;proto";
+package proto;
+
+service ClonseClient {
+
+	rpc ClonseClient(ClonseClientRequest) returns (ClonseClientResponse) {}
+}
+
+message ClonseClientRequest {
+    string clientid         = 1;
+}
+
+message ClonseClientResponse {
+    bool   result 		    = 1;
+}

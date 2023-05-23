@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+option go_package="./;proto";
+package proto;
+
+service SendMessageToGroup {
+
+	rpc SendMessageToGroup(SendMessageToGroupRequest) returns (SendMessageToGroupResponse) {}
+}
+
+message SendMessageToGroupRequest {
+    string  group           = 1;
+    string  message         = 2;
+}
+
+message SendMessageToGroupResponse {
+    bool   result 		= 1;
+    int32  arrive       = 2;
+}

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package="./;proto";
+package proto;
+
+service SendMessageToUid {
+
+	rpc SendMessageToUid(SendMessageToUidRequest) returns (SendMessageToUidResponse) {}
+}
+
+message SendMessageToUidRequest {
+    string  uid        = 1;
+    string  message    = 2;
+}
+
+message SendMessageToUidResponse {
+    bool    result         = 1;
+}

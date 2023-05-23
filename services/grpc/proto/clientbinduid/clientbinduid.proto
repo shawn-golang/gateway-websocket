@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package="./;proto";
+package proto;
+
+service ClientBindUid {
+
+	rpc ClientBindUid(ClientBindUidRequest) returns (ClientBindUidResponse) {}
+}
+
+message ClientBindUidRequest {
+    string  clientid        = 1;
+    string  uid             = 2;
+}
+
+message ClientBindUidResponse {
+    bool   result 		= 1;
+}

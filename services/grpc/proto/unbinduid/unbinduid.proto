@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package="./;proto";
+package proto;
+
+service UnBindUid {
+
+	rpc UnBindUid(UnBindUidRequest) returns (UnBindUidResponse) {}
+}
+
+message UnBindUidRequest {
+    string  clientid        = 1;
+}
+
+message UnBindUidResponse {
+    bool    result         = 1;
+}

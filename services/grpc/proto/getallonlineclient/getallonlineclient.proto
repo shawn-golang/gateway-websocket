@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+option go_package="./;proto";
+package proto;
+
+service GetAllOnlineClient {
+
+	rpc GetAllOnlineClient(GetAllOnlineClientRequest) returns (GetAllOnlineClientResponse) {}
+}
+
+message GetAllOnlineClientRequest {}
+
+message GetAllOnlineClientResponse {
+    repeated string 	client 		= 1;
+}

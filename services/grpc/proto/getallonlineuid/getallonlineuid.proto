@@ -1,0 +1,16 @@
+
+syntax = "proto3";
+
+option go_package="./;proto";
+package proto;
+
+service GetAllOnlineUid {
+
+	rpc GetAllOnlineUid(GetAllOnlineUidRequest) returns (GetAllOnlineUidResponse) {}
+}
+
+message GetAllOnlineUidRequest {}
+
+message GetAllOnlineUidResponse {
+    repeated string 	uid 		= 1;
+}

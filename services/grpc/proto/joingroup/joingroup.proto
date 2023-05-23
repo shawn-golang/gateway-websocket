@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package="./;proto";
+package proto;
+
+service JoinGroup {
+
+	rpc JoinGroup(JoinGroupRequest) returns (JoinGroupResponse) {}
+}
+
+message JoinGroupRequest {
+    string  clientid        = 1;
+    string  group           = 2;
+}
+
+message JoinGroupResponse {
+    bool    result         = 1;
+}

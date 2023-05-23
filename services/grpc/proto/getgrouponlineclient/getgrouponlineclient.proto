@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package="./;proto";
+package proto;
+
+service GetGroupOnlineClient {
+
+	rpc GetGroupOnlineClient(GetGroupOnlineClientRequest) returns (GetGroupOnlineClientResponse) {}
+}
+
+message GetGroupOnlineClientRequest {
+    string  group        = 1;
+}
+
+message GetGroupOnlineClientResponse {
+    repeated string 	clientid 		= 1;
+}

@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+option go_package="./;proto";
+package proto;
+
+service LeaveGroup {
+
+	rpc LeaveGroup(LeaveGroupRequest) returns (LeaveGroupResponse) {}
+}
+
+message LeaveGroupRequest {
+    string  clientid        = 1;
+    string  group           = 2;
+}
+
+message LeaveGroupResponse {
+    bool    result         = 1;
+}

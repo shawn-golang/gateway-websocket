@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package="./;proto";
+package proto;
+
+service GetClientByUid {
+
+	rpc GetClientByUid(GetClientByUidRequest) returns (GetClientByUidResponse) {}
+}
+
+message GetClientByUidRequest {
+    string      clientid    = 1;
+}
+
+message GetClientByUidResponse {
+    string 	    uid 		= 1;
+}

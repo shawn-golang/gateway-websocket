@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option go_package="./;proto";
+package proto;
+
+service UidIsOnline {
+
+	rpc UidIsOnline(UidIsOnlineRequest) returns (UidIsOnlineResponse) {}
+}
+
+message UidIsOnlineRequest {
+    string  uid        = 1;
+}
+
+message UidIsOnlineResponse {
+    bool    result         = 1;
+}
