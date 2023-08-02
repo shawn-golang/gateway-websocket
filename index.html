@@ -1,3 +1,9 @@
+<!--
+ * @Author: psq
+ * @Date: 2023-04-24 15:34:15
+ * @LastEditors: psq
+ * @LastEditTime: 2023-08-02 18:04:55
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -11,51 +17,45 @@
 </body>
 <script src="./script/reconnecting-websocket.js"></script>
 <script src="./script/reconnecting-websocket.min.js"></script>
-<script src="./script/jquery.min.js"></script>
 
 <script>
 
-    $(function(){
+    // 创建 WebSocket 连接
+    var ws = new WebSocket("ws://127.0.0.1:8282");
 
-        // 创建 WebSocket 连接
-        var ws = new WebSocket("ws://127.0.0.1:8181/wss");
-
-        // 监听连接打开事件
-        ws.onopen = function() {
-            
-            console.log("WebSocket 连接已打开");
+    // 监听连接打开事件
+    ws.onopen = function() {
         
-        };
+        console.log("WebSocket 连接已打开");
+    
+    };
 
-        // 监听收到消息事件
-        ws.onmessage = function(event) {
+    // 监听收到消息事件
+    ws.onmessage = function(event) {
 
-            console.log("收到消息: " + event.data+ ", 打印时间: " + new Date().getTime());
-        
-        };
+        console.log("收到消息: " + event.data+ ", 打印时间: " + new Date().getTime());
+    
+    };
 
-        // 监听连接关闭事件
-        ws.onclose = function() {
+    // 监听连接关闭事件
+    ws.onclose = function() {
 
-            console.log("WebSocket 连接已关闭。时间: "+ new Date().getTime());
-        };
+        console.log("WebSocket 连接已关闭。时间: "+ new Date().getTime());
+    };
 
-        setInterval(function() {
+    setInterval(function() {
 
-            if (ws.readyState === WebSocket.OPEN) {
-                ws.send('ping');
-            }else{
-                console.log("服务已断开 时间: "+new Date().getTime() )
-            }
-        }, 15000);
+        if (ws.readyState === WebSocket.OPEN) {
+            ws.send('ping');
+        }else{
+            console.log("服务已断开 时间: "+new Date().getTime() )
+        }
+    }, 15000);
 
 
-        $('.closeConnect').on('click', function(){
+    $('.closeConnect').on('click', function(){
 
-            ws.close();
-        })
-
+        ws.close();
     })
-
 </script>
 </html>

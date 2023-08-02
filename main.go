@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-04-24 15:14:11
  * @LastEditors: psq
- * @LastEditTime: 2023-05-12 15:50:50
+ * @LastEditTime: 2023-08-02 18:04:41
  */
 package main
 
@@ -21,13 +21,13 @@ func gatewayWebsocketService() {
 
 	gin.SetMode(gin.ReleaseMode)
 
-	go gRPC.GrpcServiceStart()
+	go gRPC.RegService()
 
 	engine := gin.Default()
 
-	engine.GET("/"+fmt.Sprintf("%v", config.GatewayConfig["WebsocketRoute"]), WebSocket.WsServer)
+	engine.GET("/", WebSocket.WsServer)
 
-	engine.Run(":" + fmt.Sprintf("%v", config.GatewayConfig["GatewayServicePort"]))
+	engine.Run(fmt.Sprintf(":%d", config.GatewayConfig["GatewayServicePort"]))
 }
 
 func main() {
@@ -50,7 +50,6 @@ func main() {
 
 			command.DumpServieStatus()
 			return
-		case "reload":
 		case "daemon":
 
 			gatewayWebsocketService()
@@ -69,18 +68,17 @@ func main() {
 TIPS:
 
 	usage := `
-gateway-websocket is an efficient WebSocket server.
-
-Usage:
-
-    gateway-websocket <command>
-
-The commands are:
-
-    start       starts the gateway-websocket process
-    stop        stops the gateway-websocket process
-    status      displays the runtime status and client connection information of gateway-websocket
-    reload      hot-reloads the configuration file
-    `
+ gateway-websocket is an efficient WebSocket server.
+ 
+ Usage:
+ 
+	 gateway-websocket <command>
+ 
+ The commands are:
+ 
+	 start       starts the gateway-websocket process
+	 stop        stops the gateway-websocket process
+	 status      displays the runtime status and client connection information of gateway-websocket
+	 `
 	fmt.Println(usage)
 }

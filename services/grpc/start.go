@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-04-28 20:30:51
  * @LastEditors: psq
- * @LastEditTime: 2023-05-22 17:55:10
+ * @LastEditTime: 2023-08-02 18:05:31
  */
 package services
 
@@ -62,7 +62,7 @@ func identityCheck(ctx context.Context, req interface{}, info *grpc.UnaryServerI
 
 	pass := false
 
-	ipaddr := config.GatewayConfig["ClientIP"].([]string)
+	ipaddr := config.GatewayConfig["ServerIP"].([]string)
 
 	if len(ipaddr) >= 1 {
 
@@ -86,7 +86,7 @@ func identityCheck(ctx context.Context, req interface{}, info *grpc.UnaryServerI
 	return handler(ctx, req)
 }
 
-func GrpcServiceStart() {
+func RegService() {
 
 	listenPort, _ := net.Listen("tcp", fmt.Sprintf(":%d", config.GatewayConfig["GRPCServicePort"]))
 
