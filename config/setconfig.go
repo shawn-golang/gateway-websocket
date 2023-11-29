@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-04-27 18:39:35
  * @LastEditors: psq
- * @LastEditTime: 2023-08-02 18:05:58
+ * @LastEditTime: 2023-11-24 19:42:07
  */
 package config
 
@@ -44,7 +44,7 @@ func init() {
 		return
 	}
 
-	cnf, err := ini.Load("./config/config.ini")
+	cnf, err := ini.Load(configPath)
 
 	if err != nil {
 

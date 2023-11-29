@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2022-05-08 14:18:08
  * @LastEditors: psq
- * @LastEditTime: 2023-04-29 01:23:12
+ * @LastEditTime: 2023-07-13 10:08:48
  */
 
 package websocket
@@ -33,8 +33,7 @@ var (
 			return true
 		},
 	}
-	// 设置消息包发送格式
-	TextMessage = websocket.TextMessage
+
 	// 设置心跳检测间隔时长（秒）
 	HeartbeatTime = config.GatewayConfig["HeartbeatTimeout"].(int)
 )
@@ -62,7 +61,7 @@ func WsServer(c *gin.Context) {
 	}
 
 	// 发送客户端唯一标识 ID
-	if err = conn.WriteMessage(websocket.TextMessage, []byte(clientID)); err != nil {
+	if err = conn.WriteMessage(config.GatewayConfig["MessageFormat"].(int), []byte(clientID)); err != nil {
 
 		return
 	}
@@ -92,9 +91,9 @@ func WsServer(c *gin.Context) {
 		}
 
 		// 当客户端发送的是心跳时返回pong字符包以此刷新心跳
-		if messageType == websocket.TextMessage && string(message) == "ping" {
+		if messageType == config.GatewayConfig["MessageFormat"].(int) && string(message) == "ping" {
 
-			err = conn.WriteMessage(websocket.TextMessage, []byte("pong"))
+			err = conn.WriteMessage(config.GatewayConfig["MessageFormat"].(int), []byte("pong"))
 
 			// 向客户端发送消息如果遇到异常当即断开连接
 			if err != nil {

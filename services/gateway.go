@@ -2,13 +2,13 @@
  * @Author: psq
  * @Date: 2023-04-24 18:47:27
  * @LastEditors: psq
- * @LastEditTime: 2023-05-06 10:53:35
+ * @LastEditTime: 2023-11-23 14:59:18
  */
 
 package services
 
 import (
-	"fmt"
+	"gateway-websocket/config"
 	"gateway-websocket/services/websocket"
 )
 
@@ -28,8 +28,6 @@ func (g Gateway) UnGroup(groupname string) bool {
 		return true
 	}
 
-	fmt.Println(group.ClientID)
-
 	for _, v := range group.ClientID {
 
 		client, ok := websocket.GatewayClients[v]
@@ -41,10 +39,13 @@ func (g Gateway) UnGroup(groupname string) bool {
 
 		for k, c := range client.JoinGroup {
 
-			if c == groupname {
-				client.JoinGroup = append(client.JoinGroup[:k], client.JoinGroup[k+1:]...)
-				break
+			if c != groupname {
+
+				continue
 			}
+
+			client.JoinGroup = append(client.JoinGroup[:k], client.JoinGroup[k+1:]...)
+			break
 		}
 
 	}
@@ -80,7 +81,7 @@ func (g Gateway) SendMessageToGroup(groupname string, message []byte) (int, bool
 			continue
 		}
 
-		if err := client.Conn.WriteMessage(websocket.TextMessage, message); err == nil {
+		if err := client.Conn.WriteMessage(config.GatewayConfig["MessageFormat"].(int), message); err == nil {
 
 			sendCount++
 		}
@@ -306,7 +307,7 @@ func (g Gateway) SendMessageToUid(uid string, message []byte) bool {
 
 	for _, v := range user.ClientID {
 
-		_ = websocket.GatewayClients[v].Conn.WriteMessage(websocket.TextMessage, message)
+		_ = websocket.GatewayClients[v].Conn.WriteMessage(config.GatewayConfig["MessageFormat"].(int), message)
 	}
 
 	return true
@@ -415,7 +416,7 @@ func (g Gateway) BroadcastMessage(message []byte) {
 
 		go func(c *websocket.WebSocketClientBase) {
 
-			_ = c.Conn.WriteMessage(websocket.TextMessage, message)
+			_ = c.Conn.WriteMessage(config.GatewayConfig["MessageFormat"].(int), message)
 
 		}(client)
 	}
@@ -436,7 +437,7 @@ func (g Gateway) SendMessageToClient(clientid string, message []byte) bool {
 		return false
 	}
 
-	if err := client.Conn.WriteMessage(websocket.TextMessage, message); err != nil {
+	if err := client.Conn.WriteMessage(config.GatewayConfig["MessageFormat"].(int), message); err != nil {
 
 		return false
 	}

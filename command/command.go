@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-05-09 10:00:18
  * @LastEditors: psq
- * @LastEditTime: 2023-05-22 18:01:48
+ * @LastEditTime: 2023-11-29 10:03:53
  */
 
 package command
@@ -31,81 +31,6 @@ var (
 	gRPCPort = config.GatewayConfig["GRPCServicePort"]
 )
 
-func countOnlineCient() int {
-
-	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", gRPCPort), grpc.WithInsecure())
-	if err != nil {
-
-		return 0
-	}
-
-	defer conn.Close()
-
-	c := CountOnlineClientPB.NewCountOnlineClientClient(conn)
-
-	req := &CountOnlineClientPB.CountOnlineClientRequest{}
-
-	res, err := c.CountOnlineClient(context.Background(), req)
-
-	if err != nil {
-		fmt.Println(err)
-		return 0
-	}
-
-	return int(res.Count)
-}
-
-func countOnlineGroup() int {
-
-	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", gRPCPort), grpc.WithInsecure())
-
-	if err != nil {
-
-		return 0
-	}
-
-	defer conn.Close()
-
-	c := CountGroupPB.NewCountGroupClient(conn)
-
-	req := &CountGroupPB.CountGroupRequest{}
-
-	res, err := c.CountGroup(context.Background(), req)
-
-	if err != nil {
-
-		return 0
-	}
-
-	return int(res.Count)
-
-}
-
-func countOnlineUser() int {
-
-	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", gRPCPort), grpc.WithInsecure())
-	if err != nil {
-
-		return 0
-	}
-
-	defer conn.Close()
-
-	c := CountOnlineUidPB.NewCountOnlineUidClient(conn)
-
-	req := &CountOnlineUidPB.CountOnlineUidRequest{}
-
-	res, err := c.CountOnlineUid(context.Background(), req)
-
-	if err != nil {
-
-		return 0
-	}
-
-	return int(res.Count)
-
-}
-
 func getGatewayPID() string {
 
 	data, err := ioutil.ReadFile(pidFile)
@@ -117,15 +42,56 @@ func getGatewayPID() string {
 	return string(data)
 }
 
-func DumpServieStatus() {
+func GatewayStatus() {
 
 	pid := getGatewayPID()
+
 	if _, err := os.Stat(pid); err == nil {
+
 		fmt.Println("gateway-websocket service not started.")
 		return
 	}
 
-	usage := "----------------------------------------------Gatewat-Websocket Status----------------------------------------------------"
+	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", gRPCPort), grpc.WithInsecure())
+
+	if err != nil {
+
+		fmt.Println("gateway-websocket gRPC communication failure.")
+		return
+	}
+
+	defer conn.Close()
+
+	countOnlineUser, countOnlineClient, countOnlineGroup := 0, 0, 0
+
+	usersRequest := &CountOnlineUidPB.CountOnlineUidRequest{}
+
+	usersResponse, usersErr := CountOnlineUidPB.NewCountOnlineUidClient(conn).CountOnlineUid(context.Background(), usersRequest)
+
+	if usersErr == nil {
+
+		countOnlineUser = int(usersResponse.Count)
+	}
+
+	clientRequest := &CountOnlineClientPB.CountOnlineClientRequest{}
+
+	clientResponse, clientErr := CountOnlineClientPB.NewCountOnlineClientClient(conn).CountOnlineClient(context.Background(), clientRequest)
+
+	if clientErr == nil {
+
+		countOnlineClient = int(clientResponse.Count)
+	}
+
+	groupRequest := &CountGroupPB.CountGroupRequest{}
+
+	groupResponse, groupErr := CountGroupPB.NewCountGroupClient(conn).CountGroup(context.Background(), groupRequest)
+
+	if groupErr == nil {
+
+		countOnlineGroup = int(groupResponse.Count)
+	}
+
+	usage := "----------------------------------------------Gateway-Websocket Status----------------------------------------------------"
 
 	// 获取进程信息
 	cmd, err := exec.Command("ps", "-p", getGatewayPID(), "-o", "%cpu,%mem,etime=,lstart=").Output()
@@ -141,22 +107,24 @@ func DumpServieStatus() {
 
 		if len(fields) > 0 {
 
-			usage += fmt.Sprintf("\nGateway version: %s\tCPU: %s\tMemory: %s\tTime: %s\tStarted at: %s", version, fields[0], fields[1], fields[2], strings.Join(fields[3:], " "))
+			usage += fmt.Sprintf("\nGateway version: %s\tCPU Use: %s\tMemory Use: %s\tTime: %s\tStarted at: %s", version, fields[0], fields[1], fields[2], strings.Join(fields[3:], " "))
 		}
 	}
 
 	usage += fmt.Sprintf("\nGateway port: %d \t\tgRPC port: %d\n", config.GatewayConfig["GatewayServicePort"], config.GatewayConfig["GRPCServicePort"])
 
-	usage += "----------------------------------------------Gatewat-Websocket Connect----------------------------------------------------\n"
+	usage += "----------------------------------------------Gateway-Websocket Connect----------------------------------------------------\n"
 
-	usage += fmt.Sprintf("Client: %d\tRegister Users: %d\tGroup:  %d\n", countOnlineCient(), countOnlineUser(), countOnlineGroup())
+	usage += fmt.Sprintf("Client: %d\tRegister Users: %d\tGroup:  %d\n", countOnlineClient, countOnlineUser, countOnlineGroup)
 
-	usage += "----------------------------------------------Gatewat-Websocket Cluster----------------------------------------------------"
+	// usage += "----------------------------------------------Gateway-Websocket Cluster----------------------------------------------------"
 
 	fmt.Println(usage)
 }
 
-func StartService() {
+func StartGateway() {
+
+	fmt.Println("Start gateway-websocket server...")
 
 	// 检查gRPC端口占用
 	if _, err := net.Listen("tcp", ":"+fmt.Sprintf("%v", config.GatewayConfig["GRPCServicePort"])); err != nil {
@@ -172,29 +140,27 @@ func StartService() {
 		return
 	}
 
+	// 以守护进程方式启动程序
 	cmd := exec.Command(os.Args[0], "daemon")
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setsid: true,
-	}
+	cmd.SysProcAttr = &syscall.SysProcAttr{Setsid: true}
 
 	err := cmd.Start()
 	if err != nil {
+
 		fmt.Println(err)
 		return
 	}
 
 	err = ioutil.WriteFile(pidFile, []byte(strconv.Itoa(cmd.Process.Pid)), 0644)
-
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
-	fmt.Println("Start gateway-websocket server...")
-	fmt.Println("successful，gateway-websocket listening on port", config.GatewayConfig["GatewayServicePort"])
+	fmt.Println("successful, gateway-websocket listening on port", config.GatewayConfig["GatewayServicePort"])
 }
 
-func StopService() {
+func StopGateway() {
 
 	pid, err := strconv.Atoi(getGatewayPID())
 	if err != nil {

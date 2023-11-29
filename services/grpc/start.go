@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-04-28 20:30:51
  * @LastEditors: psq
- * @LastEditTime: 2023-08-02 18:05:31
+ * @LastEditTime: 2023-11-24 19:51:28
  */
 package services
 
@@ -13,6 +13,7 @@ import (
 	"net"
 
 	Controllers "gateway-websocket/services/grpc/controllers"
+
 	BroadcastMessagePB "gateway-websocket/services/grpc/proto/broadcastmessage"
 	ClientBindUidPB "gateway-websocket/services/grpc/proto/clientbinduid"
 	ClientIsOnlinePB "gateway-websocket/services/grpc/proto/clientisonline"
@@ -37,7 +38,6 @@ import (
 	SendMessageToGroupPB "gateway-websocket/services/grpc/proto/sendmessagetogroup"
 	UnGroupPB "gateway-websocket/services/grpc/proto/ungroup"
 
-	"google.golang.org/grpc"
 	GRPC "google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/peer"
@@ -53,7 +53,7 @@ import (
  * @param {grpc.UnaryHandler} handler
  * @return {*}
  */
-func identityCheck(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+func identityCheck(ctx context.Context, req interface{}, info *GRPC.UnaryServerInfo, handler GRPC.UnaryHandler) (interface{}, error) {
 
 	p, _ := peer.FromContext(ctx)
 
@@ -68,12 +68,15 @@ func identityCheck(ctx context.Context, req interface{}, info *grpc.UnaryServerI
 
 		for _, v := range ipaddr {
 
-			if host == v {
+			if host != v {
 
-				pass = true
-				break
+				continue
 			}
+
+			pass = true
+			break
 		}
+
 	} else {
 		pass = true
 	}
