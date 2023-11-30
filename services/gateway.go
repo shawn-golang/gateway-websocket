@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-04-24 18:47:27
  * @LastEditors: psq
- * @LastEditTime: 2023-11-23 14:59:18
+ * @LastEditTime: 2023-11-30 16:13:38
  */
 
 package services
@@ -21,36 +21,35 @@ type Gateway struct{}
  */
 func (g Gateway) UnGroup(groupname string) bool {
 
-	group, ok := websocket.GatewayGroup[groupname]
+	groupInterface, ok := websocket.GatewayGroup.Load(groupname)
 
 	if !ok {
-
-		return true
+		// Group 不存在
+		return false
 	}
 
-	for _, v := range group.ClientID {
+	group, _ := groupInterface.(*websocket.WebSocketGroupBase)
 
-		client, ok := websocket.GatewayClients[v]
+	for _, clientID := range group.ClientID {
+
+		clientInterface, ok := websocket.GatewayClients.Load(clientID)
 
 		if !ok {
-
+			// Client 不存在
 			continue
 		}
 
-		for k, c := range client.JoinGroup {
+		client, _ := clientInterface.(*websocket.WebSocketClientBase)
 
-			if c != groupname {
-
-				continue
+		for k, joinedGroup := range client.JoinGroup {
+			if joinedGroup == groupname {
+				client.JoinGroup = append(client.JoinGroup[:k], client.JoinGroup[k+1:]...)
+				break
 			}
-
-			client.JoinGroup = append(client.JoinGroup[:k], client.JoinGroup[k+1:]...)
-			break
 		}
-
 	}
 
-	delete(websocket.GatewayGroup, groupname)
+	websocket.GatewayGroup.Delete(groupname)
 
 	return true
 }
@@ -63,7 +62,7 @@ func (g Gateway) UnGroup(groupname string) bool {
  */
 func (g Gateway) SendMessageToGroup(groupname string, message []byte) (int, bool) {
 
-	group, ok := websocket.GatewayGroup[groupname]
+	groupInterface, ok := websocket.GatewayGroup.Load(groupname)
 
 	if !ok {
 
@@ -72,14 +71,18 @@ func (g Gateway) SendMessageToGroup(groupname string, message []byte) (int, bool
 
 	sendCount := 0
 
+	group, _ := groupInterface.(*websocket.WebSocketGroupBase)
+
 	for _, v := range group.ClientID {
 
-		client, ok := websocket.GatewayClients[v]
+		clientInterface, ok := websocket.GatewayClients.Load(v)
 
 		if !ok {
 
 			continue
 		}
+
+		client, _ := clientInterface.(*websocket.WebSocketClientBase)
 
 		if err := client.Conn.WriteMessage(config.GatewayConfig["MessageFormat"].(int), message); err == nil {
 
@@ -97,12 +100,14 @@ func (g Gateway) SendMessageToGroup(groupname string, message []byte) (int, bool
  */
 func (g Gateway) CountOnlineGroup(groupname string) int {
 
-	group, ok := websocket.GatewayGroup[groupname]
+	groupInterface, ok := websocket.GatewayGroup.Load(groupname)
 
 	if !ok {
 
 		return 0
 	}
+
+	group, _ := groupInterface.(*websocket.WebSocketGroupBase)
 
 	return len(group.ClientID)
 }
@@ -113,7 +118,15 @@ func (g Gateway) CountOnlineGroup(groupname string) int {
  */
 func (g Gateway) CountGroup() int {
 
-	return len(websocket.GatewayGroup)
+	length := 0
+
+	websocket.GatewayGroup.Range(func(key, value interface{}) bool {
+		// 每次迭代都增加计数
+		length++
+		return true
+	})
+
+	return length
 }
 
 /**
@@ -123,12 +136,14 @@ func (g Gateway) CountGroup() int {
  */
 func (g Gateway) GetGroupOnlineClient(groupname string) []string {
 
-	group, ok := websocket.GatewayGroup[groupname]
+	groupInterface, ok := websocket.GatewayGroup.Load(groupname)
 
 	if !ok {
 
 		return []string{}
 	}
+
+	group, _ := groupInterface.(*websocket.WebSocketGroupBase)
 
 	return group.ClientID
 }
@@ -141,7 +156,14 @@ func (g Gateway) GetGroupOnlineClient(groupname string) []string {
  */
 func (g Gateway) LeaveGroup(clientid string, groupname string) bool {
 
-	client, ok := websocket.GatewayClients[clientid]
+	clientInterface, ok := websocket.GatewayClients.Load(clientid)
+
+	if !ok {
+
+		return false
+	}
+
+	groupInterface, ok := websocket.GatewayGroup.Load(groupname)
 
 	if !ok {
 
@@ -150,6 +172,9 @@ func (g Gateway) LeaveGroup(clientid string, groupname string) bool {
 
 	isLeave := true
 
+	client, _ := clientInterface.(*websocket.WebSocketClientBase)
+
+	// 判断用户是否在需要退出的群组内
 	for _, v := range client.JoinGroup {
 
 		if v == groupname {
@@ -164,27 +189,29 @@ func (g Gateway) LeaveGroup(clientid string, groupname string) bool {
 		return isLeave
 	}
 
-	for i := 0; i < len(websocket.GatewayClients[clientid].JoinGroup); i++ {
+	for i := 0; i < len(client.JoinGroup); i++ {
 
-		if websocket.GatewayClients[clientid].JoinGroup[i] == groupname {
+		if client.JoinGroup[i] == groupname {
 
-			websocket.GatewayClients[clientid].JoinGroup = append(websocket.GatewayClients[clientid].JoinGroup[:i], websocket.GatewayClients[clientid].JoinGroup[i+1:]...)
+			client.JoinGroup = append(client.JoinGroup[:i], client.JoinGroup[i+1:]...)
 			break
 		}
 	}
 
-	for i := 0; i < len(websocket.GatewayGroup[groupname].ClientID); i++ {
+	group, _ := groupInterface.(*websocket.WebSocketGroupBase)
 
-		if websocket.GatewayGroup[groupname].ClientID[i] == clientid {
+	for i := 0; i < len(group.ClientID); i++ {
 
-			websocket.GatewayGroup[groupname].ClientID = append(websocket.GatewayGroup[groupname].ClientID[:i], websocket.GatewayGroup[groupname].ClientID[i+1:]...)
+		if group.ClientID[i] == clientid {
+
+			group.ClientID = append(group.ClientID[:i], group.ClientID[i+1:]...)
 			break
 		}
 	}
 
-	if len(websocket.GatewayGroup[groupname].ClientID) == 0 {
+	if len(group.ClientID) == 0 {
 
-		delete(websocket.GatewayGroup, groupname)
+		websocket.GatewayGroup.Delete(groupname)
 	}
 
 	return true
@@ -198,12 +225,14 @@ func (g Gateway) LeaveGroup(clientid string, groupname string) bool {
  */
 func (g Gateway) JoinGroup(clientid string, groupname string) bool {
 
-	client, ok := websocket.GatewayClients[clientid]
+	clientInterface, ok := websocket.GatewayClients.Load(clientid)
 
 	if !ok {
 
 		return false
 	}
+
+	client, _ := clientInterface.(*websocket.WebSocketClientBase)
 
 	for _, v := range client.JoinGroup {
 
@@ -213,17 +242,19 @@ func (g Gateway) JoinGroup(clientid string, groupname string) bool {
 		}
 	}
 
-	group, ok := websocket.GatewayGroup[groupname]
+	groupInterface, ok := websocket.GatewayGroup.Load(groupname)
 
 	if !ok {
 
-		websocket.GatewayGroup[groupname] = &websocket.WebSocketGroupBase{
+		websocket.GatewayGroup.Store(groupname, &websocket.WebSocketGroupBase{
 			ClientID: []string{clientid},
-		}
+		})
 
 	} else {
 
 		isExist := false
+
+		group, _ := groupInterface.(*websocket.WebSocketGroupBase)
 
 		for _, v := range group.ClientID {
 
@@ -252,12 +283,14 @@ func (g Gateway) JoinGroup(clientid string, groupname string) bool {
  */
 func (g Gateway) GetUidByClient(uid string) []string {
 
-	user, ok := websocket.GatewayUser[uid]
+	userInterface, ok := websocket.GatewayUser.Load(uid)
 
 	if !ok {
 
 		return []string{}
 	}
+
+	user, _ := userInterface.(*websocket.WebSocketUserBase)
 
 	return user.ClientID
 }
@@ -268,7 +301,15 @@ func (g Gateway) GetUidByClient(uid string) []string {
  */
 func (g Gateway) CountOnlineUid() int {
 
-	return len(websocket.GatewayUser)
+	length := 0
+
+	websocket.GatewayUser.Range(func(key, value interface{}) bool {
+		// 每次迭代都增加计数
+		length++
+		return true
+	})
+
+	return length
 }
 
 /**
@@ -277,15 +318,16 @@ func (g Gateway) CountOnlineUid() int {
  */
 func (g Gateway) GetAllOnlineUid() []string {
 
-	keys := make([]string, len(websocket.GatewayUser))
+	var keys []string
 
-	i := 0
+	websocket.GatewayUser.Range(func(k, value interface{}) bool {
 
-	for k := range websocket.GatewayUser {
+		user, _ := value.(*websocket.WebSocketUserBase)
 
-		keys[i] = k
-		i++
-	}
+		keys = append(keys, user.Uid)
+
+		return true
+	})
 
 	return keys
 }
@@ -298,16 +340,24 @@ func (g Gateway) GetAllOnlineUid() []string {
  */
 func (g Gateway) SendMessageToUid(uid string, message []byte) bool {
 
-	user, ok := websocket.GatewayUser[uid]
+	userInterface, ok := websocket.GatewayUser.Load(uid)
 
 	if !ok {
 
 		return false
 	}
 
+	user, _ := userInterface.(*websocket.WebSocketUserBase)
+
 	for _, v := range user.ClientID {
 
-		_ = websocket.GatewayClients[v].Conn.WriteMessage(config.GatewayConfig["MessageFormat"].(int), message)
+		if clientInterface, ok := websocket.GatewayClients.Load(v); ok {
+
+			client, _ := clientInterface.(*websocket.WebSocketClientBase)
+
+			client.Conn.WriteMessage(config.GatewayConfig["MessageFormat"].(int), message)
+
+		}
 	}
 
 	return true
@@ -320,7 +370,7 @@ func (g Gateway) SendMessageToUid(uid string, message []byte) bool {
  */
 func (g Gateway) UidIsOnline(uid string) bool {
 
-	_, ok := websocket.GatewayUser[uid]
+	_, ok := websocket.GatewayUser.Load(uid)
 
 	return ok
 }
@@ -332,24 +382,40 @@ func (g Gateway) UidIsOnline(uid string) bool {
  */
 func (g Gateway) UnBindUid(clientid string) bool {
 
-	client, ok := websocket.GatewayClients[clientid]
+	clientInterface, ok := websocket.GatewayClients.Load(clientid)
 
 	if !ok {
 
 		return false
 	}
 
-	for k, v := range websocket.GatewayUser[client.BindUid].ClientID {
+	client, _ := clientInterface.(*websocket.WebSocketClientBase)
+
+	if client.BindUid == "" {
+
+		return true
+	}
+
+	userInterface, ok := websocket.GatewayUser.Load(client.BindUid)
+
+	if !ok {
+
+		return false
+	}
+
+	user, _ := userInterface.(*websocket.WebSocketUserBase)
+
+	for k, v := range user.ClientID {
 
 		if v == clientid {
 
-			websocket.GatewayUser[client.BindUid].ClientID = append(websocket.GatewayUser[client.BindUid].ClientID[:k], websocket.GatewayUser[client.BindUid].ClientID[k+1:]...)
+			user.ClientID = append(user.ClientID[:k], user.ClientID[k+1:]...)
 		}
 	}
 
-	if len(websocket.GatewayUser[client.BindUid].ClientID) == 0 {
+	if len(user.ClientID) == 0 {
 
-		delete(websocket.GatewayUser, client.BindUid)
+		websocket.GatewayUser.Delete(client.BindUid)
 	}
 
 	client.BindUid = ""
@@ -365,27 +431,36 @@ func (g Gateway) UnBindUid(clientid string) bool {
  */
 func (g Gateway) ClientBindUid(clientid string, uid string) bool {
 
-	client, ok := websocket.GatewayClients[clientid]
+	clientInterface, ok := websocket.GatewayClients.Load(clientid)
 
 	if !ok {
 
 		return false
 	}
 
+	client, _ := clientInterface.(*websocket.WebSocketClientBase)
+
+	if client.BindUid != "" {
+
+		g.UnBindUid(clientid)
+	}
+
 	client.BindUid = uid
 
-	user, ok := websocket.GatewayUser[uid]
+	userInterface, ok := websocket.GatewayUser.Load(uid)
 
 	if !ok {
 
-		websocket.GatewayUser[uid] = &websocket.WebSocketUserBase{
+		websocket.GatewayUser.Store(uid, &websocket.WebSocketUserBase{
 			Uid:      uid,
 			ClientID: []string{clientid},
-		}
+		})
 
 	} else {
 
 		isExist := false
+
+		user, _ := userInterface.(*websocket.WebSocketUserBase)
 
 		for _, v := range user.ClientID {
 
@@ -412,14 +487,18 @@ func (g Gateway) ClientBindUid(clientid string, uid string) bool {
  */
 func (g Gateway) BroadcastMessage(message []byte) {
 
-	for _, client := range websocket.GatewayClients {
+	websocket.GatewayClients.Range(func(key, value interface{}) bool {
+
+		client := value.(*websocket.WebSocketClientBase)
 
 		go func(c *websocket.WebSocketClientBase) {
 
-			_ = c.Conn.WriteMessage(config.GatewayConfig["MessageFormat"].(int), message)
+			c.Conn.WriteMessage(config.GatewayConfig["MessageFormat"].(int), message)
 
 		}(client)
-	}
+
+		return true
+	})
 }
 
 /**
@@ -430,19 +509,16 @@ func (g Gateway) BroadcastMessage(message []byte) {
  */
 func (g Gateway) SendMessageToClient(clientid string, message []byte) bool {
 
-	client, ok := websocket.GatewayClients[clientid]
+	clientInterface, ok := websocket.GatewayClients.Load(clientid)
 
 	if !ok {
 
 		return false
 	}
 
-	if err := client.Conn.WriteMessage(config.GatewayConfig["MessageFormat"].(int), message); err != nil {
+	client, _ := clientInterface.(*websocket.WebSocketClientBase)
 
-		return false
-	}
-
-	return true
+	return client.Conn.WriteMessage(config.GatewayConfig["MessageFormat"].(int), message) == nil
 }
 
 /**
@@ -452,12 +528,14 @@ func (g Gateway) SendMessageToClient(clientid string, message []byte) bool {
  */
 func (g Gateway) GetClientByUid(clientid string) string {
 
-	client, ok := websocket.GatewayClients[clientid]
+	clientInterface, ok := websocket.GatewayClients.Load(clientid)
 
 	if !ok {
 
 		return ""
 	}
+
+	client, _ := clientInterface.(*websocket.WebSocketClientBase)
 
 	return client.BindUid
 }
@@ -469,15 +547,17 @@ func (g Gateway) GetClientByUid(clientid string) string {
  */
 func (g Gateway) ClonseClient(clientid string) bool {
 
-	client, exists := websocket.GatewayClients[clientid]
+	clientInterface, ok := websocket.GatewayClients.Load(clientid)
 
-	if !exists {
+	if !ok {
 
-		return false
+		return true
 	}
 
+	client, _ := clientInterface.(*websocket.WebSocketClientBase)
+
 	client.Conn.Close()
-	delete(websocket.GatewayClients, clientid)
+	websocket.GatewayClients.Delete(clientid)
 
 	return true
 }
@@ -488,15 +568,16 @@ func (g Gateway) ClonseClient(clientid string) bool {
  */
 func (g Gateway) GetAllOnlineClient() []string {
 
-	keys := make([]string, len(websocket.GatewayClients))
+	var keys []string
 
-	i := 0
+	websocket.GatewayClients.Range(func(k, value interface{}) bool {
 
-	for k := range websocket.GatewayClients {
+		client, _ := value.(*websocket.WebSocketClientBase)
 
-		keys[i] = k
-		i++
-	}
+		keys = append(keys, client.ID)
+
+		return true
+	})
 
 	return keys
 }
@@ -508,7 +589,7 @@ func (g Gateway) GetAllOnlineClient() []string {
  */
 func (g Gateway) ClientIsOnline(clientid string) bool {
 
-	_, ok := websocket.GatewayClients[clientid]
+	_, ok := websocket.GatewayClients.Load(clientid)
 
 	return ok
 }
@@ -519,5 +600,13 @@ func (g Gateway) ClientIsOnline(clientid string) bool {
  */
 func (g Gateway) CountOnlineClient() int {
 
-	return len(websocket.GatewayClients)
+	length := 0
+
+	websocket.GatewayClients.Range(func(key, value interface{}) bool {
+		// 每次迭代都增加计数
+		length++
+		return true
+	})
+
+	return length
 }

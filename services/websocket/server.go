@@ -2,14 +2,16 @@
  * @Author: psq
  * @Date: 2022-05-08 14:18:08
  * @LastEditors: psq
- * @LastEditTime: 2023-07-13 10:08:48
+ * @LastEditTime: 2023-11-30 10:28:16
  */
 
 package websocket
 
 import (
+	"fmt"
 	"gateway-websocket/config"
 	"net/http"
+	"runtime/debug"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -38,31 +40,119 @@ var (
 	HeartbeatTime = config.GatewayConfig["HeartbeatTimeout"].(int)
 )
 
+/**
+ * @description: 初始化客户端连接
+ * @param {*websocket.Conn} conn
+ * @return {*}
+ */
+func handleClientInit(conn *websocket.Conn) string {
+
+	clientID := uuid.New().String()
+
+	client := &WebSocketClientBase{
+		ID:            clientID,
+		Conn:          conn,
+		LastHeartbeat: carbon.Now().Timestamp(),
+	}
+
+	// 使用 Store 方法存储值
+	GatewayClients.Store(clientID, client)
+
+	if err := conn.WriteMessage(config.GatewayConfig["MessageFormat"].(int), []byte(clientID)); err != nil {
+
+		handleClientDisconnect(clientID)
+		return ""
+	}
+
+	return clientID
+}
+
+/**
+ * @description: 主动关闭客户端连接
+ * @param {string} clientID
+ * @return {*}
+ */
+func handleClientDisconnect(clientID string) {
+
+	// 使用 Load 和 Delete 方法，不需要额外的锁定操作
+	v, ok := GatewayClients.Load(clientID)
+	if ok {
+
+		client := v.(*WebSocketClientBase)
+
+		if client.BindUid != "" {
+			clientUnBindUid(clientID, client.BindUid)
+		}
+
+		if len(client.JoinGroup) > 0 {
+			clientLeaveGroup(clientID)
+		}
+
+		GatewayClients.Delete(clientID)
+	}
+}
+
+/**
+ * @description: 向客户端回复心跳消息
+ * @param {*websocket.Conn} conn
+ * @param {string} clientID
+ * @param {int} messageType
+ * @param {[]byte} message
+ * @return {*}
+ */
+func handleClientMessage(conn *websocket.Conn, clientID string, messageType int, message []byte) {
+
+	// 使用 Load 方法获取值
+	v, ok := GatewayClients.Load(clientID)
+	if !ok {
+		// 如果没有找到对应的值，处理相应的逻辑
+		handleClientDisconnect(clientID)
+		return
+	}
+
+	client := v.(*WebSocketClientBase)
+
+	if messageType == config.GatewayConfig["MessageFormat"].(int) && string(message) == "ping" {
+
+		if err := conn.WriteMessage(config.GatewayConfig["MessageFormat"].(int), []byte("pong")); err != nil {
+
+			handleClientDisconnect(clientID)
+			return
+		}
+
+		GatewayClients.Store(clientID, &WebSocketClientBase{
+			ID:            clientID,
+			Conn:          conn,
+			LastHeartbeat: carbon.Now().Timestamp(),
+			BindUid:       client.BindUid,
+			JoinGroup:     client.JoinGroup,
+		})
+	}
+}
+
 func WsServer(c *gin.Context) {
+
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Printf("WsServer panic: %v\n", err)
+			debug.PrintStack()
+		}
+	}()
 
 	// 将 HTTP 连接升级为 WebSocket 连接
 	conn, err := upGrader.Upgrade(c.Writer, c.Request, nil)
 
 	if err != nil {
-
 		return
 	}
 
 	defer conn.Close()
 
 	// 客户端唯一身份标识
-	clientID := uuid.New().String()
-
-	// 记录客户端连接信息
-	GatewayClients[clientID] = &WebSocketClientBase{
-		ID:            clientID,
-		Conn:          conn,
-		LastHeartbeat: carbon.Now().Timestamp(),
-	}
+	clientID := handleClientInit(conn)
 
 	// 发送客户端唯一标识 ID
-	if err = conn.WriteMessage(config.GatewayConfig["MessageFormat"].(int), []byte(clientID)); err != nil {
-
+	if clientID == "" {
 		return
 	}
 
@@ -76,44 +166,11 @@ func WsServer(c *gin.Context) {
 		// 当收到err时则标识客户端连接出现异常，如断线
 		if err != nil {
 
-			if GatewayClients[clientID].BindUid != "" {
+			handleClientDisconnect(clientID)
 
-				clientUnBindUid(clientID, GatewayClients[clientID].BindUid)
-			}
+		} else {
 
-			if len(GatewayClients[clientID].JoinGroup) > 0 {
-
-				clientLeaveGroup(clientID)
-			}
-
-			delete(GatewayClients, clientID)
-			break
-		}
-
-		// 当客户端发送的是心跳时返回pong字符包以此刷新心跳
-		if messageType == config.GatewayConfig["MessageFormat"].(int) && string(message) == "ping" {
-
-			err = conn.WriteMessage(config.GatewayConfig["MessageFormat"].(int), []byte("pong"))
-
-			// 向客户端发送消息如果遇到异常当即断开连接
-			if err != nil {
-
-				if GatewayClients[clientID].BindUid != "" {
-
-					clientUnBindUid(clientID, GatewayClients[clientID].BindUid)
-				}
-
-				if len(GatewayClients[clientID].JoinGroup) > 0 {
-
-					clientLeaveGroup(clientID)
-				}
-
-				delete(GatewayClients, clientID)
-				break
-			}
-
-			// 刷新最后最后心跳时间
-			GatewayClients[clientID].LastHeartbeat = carbon.Now().Timestamp()
+			handleClientMessage(conn, clientID, messageType, message)
 		}
 	}
 

@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-05-09 10:00:18
  * @LastEditors: psq
- * @LastEditTime: 2023-11-29 10:03:53
+ * @LastEditTime: 2023-11-30 16:41:42
  */
 
 package command
@@ -26,9 +26,8 @@ import (
 )
 
 var (
-	pidFile  = "gateway-websocket.pid"
-	version  = "1.0.0.1"
-	gRPCPort = config.GatewayConfig["GRPCServicePort"]
+	pidFile = "gateway-websocket.pid"
+	version = "1.1.0.1"
 )
 
 func getGatewayPID() string {
@@ -52,7 +51,7 @@ func GatewayStatus() {
 		return
 	}
 
-	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", gRPCPort), grpc.WithInsecure())
+	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", config.GatewayConfig["GRPCServicePort"]), grpc.WithInsecure())
 
 	if err != nil {
 
@@ -115,7 +114,7 @@ func GatewayStatus() {
 
 	usage += "----------------------------------------------Gateway-Websocket Connect----------------------------------------------------\n"
 
-	usage += fmt.Sprintf("Client: %d\tRegister Users: %d\tGroup:  %d\n", countOnlineClient, countOnlineUser, countOnlineGroup)
+	usage += fmt.Sprintf("Client: %d\tUsers: %d\tGroup:  %d\n", countOnlineClient, countOnlineUser, countOnlineGroup)
 
 	// usage += "----------------------------------------------Gateway-Websocket Cluster----------------------------------------------------"
 

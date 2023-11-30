@@ -2,12 +2,13 @@
  * @Author: psq
  * @Date: 2023-04-24 15:20:00
  * @LastEditors: psq
- * @LastEditTime: 2023-08-04 16:21:26
+ * @LastEditTime: 2023-11-30 10:29:58
  */
 package websocket
 
 import (
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/golang-module/carbon"
@@ -31,11 +32,7 @@ type WebSocketGroupBase struct {
 	ClientID []string
 }
 
-var GatewayClients = make(map[string]*WebSocketClientBase)
-
-var GatewayUser = make(map[string]*WebSocketUserBase)
-
-var GatewayGroup = make(map[string]*WebSocketGroupBase)
+var GatewayClients, GatewayUser, GatewayGroup sync.Map
 
 /**
  * @description: 客户端心跳检测，超时即断开连接（主要是为了降低服务端承载压力）
@@ -48,19 +45,21 @@ func clientHeartbeatCheck(clientID string) {
 
 		time.Sleep(5 * time.Second)
 
-		client, exists := GatewayClients[clientID]
+		clientInterface, exists := GatewayClients.Load(clientID)
 
 		if !exists {
 
 			break
 		}
 
+		client, _ := clientInterface.(*WebSocketClientBase)
+
 		if (carbon.Now().Timestamp() - client.LastHeartbeat) > int64(HeartbeatTime) {
 
 			fmt.Println("Client", clientID, "heartbeat timeout")
 
 			client.Conn.Close()
-			delete(GatewayClients, clientID)
+			GatewayClients.Delete(clientID)
 			break
 		}
 	}
@@ -74,17 +73,25 @@ func clientHeartbeatCheck(clientID string) {
  */
 func clientUnBindUid(clientID string, uid string) {
 
-	for k, v := range GatewayUser[uid].ClientID {
+	value, ok := GatewayUser.Load(uid)
 
-		if v == clientID {
+	if ok {
 
-			GatewayUser[uid].ClientID = append(GatewayUser[uid].ClientID[:k], GatewayUser[uid].ClientID[k+1:]...)
+		users := value.(*WebSocketUserBase)
+
+		for k, v := range users.ClientID {
+
+			if v == clientID {
+
+				users.ClientID = append(users.ClientID[:k], users.ClientID[k+1:]...)
+			}
 		}
-	}
 
-	if len(GatewayUser[uid].ClientID) == 0 {
+		if len(users.ClientID) == 0 {
 
-		delete(GatewayUser, uid)
+			GatewayUser.Delete(uid)
+		}
+
 	}
 }
 
@@ -94,24 +101,39 @@ func clientUnBindUid(clientID string, uid string) {
  * @return {*}
  */
 func clientLeaveGroup(clientID string) {
+	// 使用 Load 方法获取值
+	value, ok := GatewayClients.Load(clientID)
+	if !ok {
+		// 如果没有找到对应的值，处理相应的逻辑
+		return
+	}
 
-	for _, v := range GatewayClients[clientID].JoinGroup {
+	client := value.(*WebSocketClientBase)
 
-		for j, id := range GatewayGroup[v].ClientID {
+	// 遍历 JoinGroup
+	for _, v := range client.JoinGroup {
+		// 使用 Load 方法获取值
+		groupValue, groupOK := GatewayGroup.Load(v)
+		if !groupOK {
+			// 如果没有找到对应的值，处理相应的逻辑
+			continue
+		}
 
+		group := groupValue.(*WebSocketGroupBase)
+
+		// 在群组中找到对应的 clientID，并删除
+		for j, id := range group.ClientID {
 			if id == clientID {
+				copy(group.ClientID[j:], group.ClientID[j+1:])
+				group.ClientID = group.ClientID[:len(group.ClientID)-1]
 
-				copy(GatewayGroup[v].ClientID[j:], GatewayGroup[v].ClientID[j+1:])
-				GatewayGroup[v].ClientID = GatewayGroup[v].ClientID[:len(GatewayGroup[v].ClientID)-1]
-
-				if len(GatewayGroup[v].ClientID) == 0 {
-
-					delete(GatewayGroup, v)
+				// 如果群组中没有成员了，删除群组
+				if len(group.ClientID) == 0 {
+					GatewayGroup.Delete(v)
 				}
 
 				break
 			}
 		}
 	}
-
 }

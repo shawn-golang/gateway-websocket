@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-04-27 18:39:35
  * @LastEditors: psq
- * @LastEditTime: 2023-11-24 19:42:07
+ * @LastEditTime: 2023-11-29 10:38:25
  */
 package config
 
@@ -52,9 +52,9 @@ func init() {
 	}
 
 	// 设置gRPC服务端运行端口
-	if cnf.Section("gateway").Key("gRPCServerPort").String() != "" {
+	if cnf.Section("gateway").Key("gRPCServicePort").String() != "" {
 
-		gRPCServicePort, err := strconv.Atoi(cnf.Section("gateway").Key("gRPCServerPort").String())
+		gRPCServicePort, err := strconv.Atoi(cnf.Section("gateway").Key("gRPCServicePort").String())
 
 		if err == nil {
 
