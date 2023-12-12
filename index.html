@@ -1,22 +1,358 @@
 <!--
  * @Author: psq
- * @Date: 2023-04-24 15:34:15
+ * @Date: 2023-11-30 10:47:24
  * @LastEditors: psq
- * @LastEditTime: 2023-11-29 19:10:27
+ * @LastEditTime: 2023-12-11 14:16:57
 -->
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>gateway-websocket 连接示例</title>
-  <p></p>
-  <form>
-      <input type="text" class="clientid">
-      <button type="button">连接</button>
-  </form>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        .ws-action, .ws-msg {
+            width: 350px;
+            height: 90vh;
+            overflow: auto;
+            border: 1px solid #666;
+            padding: 10px;
+            border-radius: 20px;
+        }
+        .ws-msg {
+            position: absolute;
+            right: 20px;
+            top: 10px
+        }
+        button {
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
-<script>
+    <div class="ws-action">
+        <b></b>
+        <h4>Client相关操作</h4>
+        <button class="broadcastmessage">Client广播消息</button>
+        <button class="clientisonline">Client是否在线</button>
+        <button class="clonseclient">关闭某个Client的连接</button>
+        <button class="sendmessagetoclient">向某个Client发送消息</button>
+        <button class="getallonlineclient">获取所有在线的Client</button>
+        <button class="countonlineclient">统计在线的Client数量</button>
+        <hr>
+        <h4>Group相关操作</h4>
+        <button class="joingroup">将Client加入群组</button>
+        <button class="ungroup">解散某个群组</button>
+        <button class="sendmessagetogroup">向某个群组发送消息</button>
+        <button class="countonlinegroup">统计某个群组的在线人数</button>
+        <button class="countgroup">统计群组数量</button>
+        <button class="getgrouponlineclient">获取群组内所有在线的client</button>
+        <button class="leavegroup">将client移除群组</button>
+        <hr>
+        <h4>User相关操作</h4>
+        <button class="clientbindiud">Client绑定Uid</button>
+        <button class="getuidbyclient">获取Uid下绑定的所有Client</button>
+        <button class="countonlineuid">统计在线的Uid数量</button>
+        <button class="getallonlineuid">获取所有在线的Uid</button>
+        <button class="sendmessagetouid">向某个Uid下所有的Client发送消息</button>
+        <button class="uidisonline">判断Uid是否在线</button>
+        <button class="unbinduid">Client解除绑定Uid</button>
+        <button class="getclientbyuid">获取Client绑定的Uid</button>
+    </div>
+    <div class="ws-msg">
+    </div>
+</body>
+<script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.7.1/jquery.js"></script>"></script>
 
+
+<script>
+    $(function(){
+
+        $('.getclientbyuid').on('click', function(){
+
+            var client = prompt('输入client')
+
+            if (client) {
+
+                $.post('getclientbyuid', {
+                    client: client
+                }, function(res){
+                    console.log(res)
+                })
+            }
+        })
+
+        $('.unbinduid').on('click', function(){
+
+            var client = prompt('输入client')
+
+            if (client) {
+
+                $.post('unbinduid', {
+                    client: client
+                }, function(res){
+                    console.log(res)
+                })
+            }
+        })
+
+        $('.uidisonline').on('click', function(){
+
+            var uid = prompt('输入Uid')
+
+            if (uid) {
+
+                $.post('uidisonline', {
+                    uid: uid
+                }, function(res){
+                    console.log(res)
+                })
+            }
+        })
+
+        $('.sendmessagetouid').on('click', function(){
+
+            var uid = prompt('输入Uid')
+
+            if (uid) {
+
+                var msg = prompt('输入消息内容')
+
+                if (msg) {
+
+                    $.post('sendmessagetouid', {
+                        uid: uid,
+                        msg: msg
+                    }, function(res) {
+                        console.log(res)
+                    })
+                }
+            }
+
+        })
+
+        $('.getallonlineuid').on('click', function(){
+
+            $.post('getallonlineuid', {}, function(res) {
+                console.log(res)
+            })
+        })
+
+        $('.countonlineuid').on('click', function(){
+
+            $.post('countonlineuid', {}, function(res) {
+                console.log(res)
+            })
+        })
+
+        $('.getuidbyclient').on('click', function(){
+
+            var uid = prompt('输入要查询的uid')
+            
+            if (uid) {
+
+                $.post('getuidbyclient', {
+                    uid: uid
+                }, function(res) {
+                    console.log(res)
+                })
+            }
+        })
+
+        $('.leavegroup').on('click', function(){
+
+            var group = prompt('输入群组名称')
+
+            if (group) {
+
+                var client = prompt('输入client编号')
+
+                if (client) {
+
+                    $.post('leavegroup', {
+                        group: group,
+                        client: client
+                    }, function(res) {
+                        console.log(res)
+                    })
+                }
+            }
+        })
+
+        $('.getgrouponlineclient').on('click', function(){
+
+            var group = prompt('输入群组名称')
+            
+            if (group) {
+                $.post('getgrouponlineclient', {
+                    group: group
+                }, function(res) {
+                    console.log(res)
+                })
+            }
+
+        })
+
+        $('.countgroup').on('click', function(){
+
+            $.post('countgroup', {}, function(res) {
+                console.log(res)
+            })
+        })
+
+        $('.countonlinegroup').on('click', function(){
+
+            var group = prompt('输入群组名称')
+            
+            if (group) {
+                $.post('countonlinegroup', {
+                    group: group
+                }, function(res) {
+                    console.log(res)
+                })
+            }
+        })
+
+        $('.sendmessagetogroup').on('click', function(){
+
+            var group = prompt('输入群组名称')
+
+            if (group) {
+
+                var msg = prompt('输入消息内容')
+
+                if (msg) {
+
+                    $.post('sendmessagetogroup', {
+                        group: group,
+                        msg: msg
+                    }, function(res) {
+                        console.log(res)
+                    })
+                }
+            }
+
+        })
+
+        $('.ungroup').on('click', function(){
+
+            var word = prompt('输入要解散的群组')
+
+            if (word) {
+
+                $.post('ungroup', {
+                    group: word
+                }, function(res) {
+                    console.log(res)
+                })
+            }
+        })
+
+        $('.countonlineclient').on('click', function(){
+
+            $.post('countonlineclient', {}, function(res) {
+                console.log(res)
+            })
+        })
+
+        $('.getallonlineclient').on('click', function(){
+
+            $.post('getallonlineclient', {}, function(res) {
+                console.log(res)
+            })
+        })
+
+        $('.sendmessagetoclient').on('click', function(){
+
+            var word = prompt('输入要接收消息的clientid')
+
+            if (word) {
+
+                $.post('sendmessagetoclient', {
+                    clientid: word,
+                }, function(res) {
+                    console.log(res)
+                })
+            }
+        })
+
+        $('.clonseclient').on('click', function(){
+
+            var word = prompt('输入要关闭的clientid')
+
+            if (word) {
+
+                $.post('clonseclient', {
+                    clientid: word,
+                }, function(res) {
+                    console.log(res)
+                })
+            }
+        })
+
+        $('.clientisonline').on('click', function(){
+
+            var word = prompt('输入要查询的clientid')
+
+            if (word) {
+
+                $.post('clientisonline', {
+                    clientid: word,
+                }, function(res) {
+                    console.log(res)
+                })
+            }
+        })
+
+        $('.joingroup').on('click', function(){
+
+            var word = prompt('输入要绑定的群组编号')
+            if (word) {
+
+                $.post('joingroup', {
+                    clientid: $('b').text(),
+                    group: word
+                }, function(res) {
+                    console.log(res)
+                })
+            }
+
+        })
+
+        $('.clientbindiud').on('click', function(){
+            
+            var word = prompt('输入要绑定的uid')
+
+            if (word) {
+
+                $.post('clientbindiud', {
+                    clientid: $('b').text(),
+                    uid: word
+                }, function(res) {
+                    console.log(res)
+                })
+            }
+            
+        })
+
+        $('.broadcastmessage').on('click', function(){
+
+            var word = prompt('输入要广播的内容')
+            
+            if (word) {
+
+                $.post('broadcastmessage', {
+                    msg : word
+                }, function(res) {
+                    console.log(res)
+                })
+            }
+
+        })
+
+    })
+</script>
+<script>
     var i = 0
 
     var ws = new WebSocket("ws://127.0.0.1:8282");
@@ -25,14 +361,18 @@
     ws.onmessage = function(event) {
       
         if (i == 0) {
-
-            console.log('你的clientID：' + event.data)
+            $('b').text(event.data)
             i++
-        }
-
-        if (event.data != "pong") {
             
-            console.log(JSON.parse(event.data))
+        } else {
+
+            if (event.data != "pong") {
+
+                var d=new Date();
+
+                $('.ws-msg').prepend('<p> 内容：' + event.data + '，时间：' + d.toLocaleString() + '</p>')
+                
+            }
         }
     };
 
@@ -47,6 +387,6 @@
             ws.send('ping');
         }
     }, 15000);
+    
 </script>
-</body>
 </html>

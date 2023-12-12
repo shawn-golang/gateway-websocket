@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2022-05-08 14:18:08
  * @LastEditors: psq
- * @LastEditTime: 2023-11-30 10:28:16
+ * @LastEditTime: 2023-12-12 16:01:31
  */
 
 package websocket
@@ -11,10 +11,7 @@ import (
 	"fmt"
 	"gateway-websocket/config"
 	"net/http"
-	"runtime/debug"
-	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/golang-module/carbon"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -22,14 +19,12 @@ import (
 
 var (
 	upGrader = websocket.Upgrader{
-		// 设置消息接收缓冲区大小（byte），如果这个值设置得太小，可能会导致服务端在读取客户端发送的大型消息时遇到问题
-		ReadBufferSize: config.GatewayConfig["ReadBufferSize"].(int),
 		// 设置消息发送缓冲区大小（byte），如果这个值设置得太小，可能会导致服务端在发送大型消息时遇到问题
 		WriteBufferSize: config.GatewayConfig["WriteBufferSize"].(int),
 		// 消息包启用压缩
-		EnableCompression: config.GatewayConfig["MessageCompression"].(bool),
+		EnableCompression: true,
 		// ws握手超时时间
-		HandshakeTimeout: time.Duration(config.GatewayConfig["WebsocketHandshakeTimeout"].(int)) * time.Second,
+		HandshakeTimeout: 5,
 		// ws握手过程中允许跨域
 		CheckOrigin: func(r *http.Request) bool {
 			return true
@@ -47,16 +42,15 @@ var (
  */
 func handleClientInit(conn *websocket.Conn) string {
 
+	// clientID也可以用其他方式生成，只要能保证在所有服务端中都能保证唯一即可
 	clientID := uuid.New().String()
 
-	client := &WebSocketClientBase{
+	// 使用 Store 方法存储值
+	GatewayClients.Store(clientID, &WebSocketClientBase{
 		ID:            clientID,
 		Conn:          conn,
 		LastHeartbeat: carbon.Now().Timestamp(),
-	}
-
-	// 使用 Store 方法存储值
-	GatewayClients.Store(clientID, client)
+	})
 
 	if err := conn.WriteMessage(config.GatewayConfig["MessageFormat"].(int), []byte(clientID)); err != nil {
 
@@ -75,8 +69,7 @@ func handleClientInit(conn *websocket.Conn) string {
 func handleClientDisconnect(clientID string) {
 
 	// 使用 Load 和 Delete 方法，不需要额外的锁定操作
-	v, ok := GatewayClients.Load(clientID)
-	if ok {
+	if v, ok := GatewayClients.Load(clientID); ok {
 
 		client := v.(*WebSocketClientBase)
 
@@ -130,17 +123,16 @@ func handleClientMessage(conn *websocket.Conn, clientID string, messageType int,
 	}
 }
 
-func WsServer(c *gin.Context) {
+func WsServer(w http.ResponseWriter, r *http.Request) {
 
 	defer func() {
 		if err := recover(); err != nil {
 			fmt.Printf("WsServer panic: %v\n", err)
-			debug.PrintStack()
 		}
 	}()
 
 	// 将 HTTP 连接升级为 WebSocket 连接
-	conn, err := upGrader.Upgrade(c.Writer, c.Request, nil)
+	conn, err := upGrader.Upgrade(w, r, nil)
 
 	if err != nil {
 		return

@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-04-24 15:14:11
  * @LastEditors: psq
- * @LastEditTime: 2023-11-29 18:54:23
+ * @LastEditTime: 2023-12-11 16:31:44
  */
 package main
 
@@ -12,22 +12,30 @@ import (
 	"gateway-websocket/config"
 	gRPC "gateway-websocket/services/grpc"
 	webSocket "gateway-websocket/services/websocket"
+	"net/http"
 	"os"
-
-	"github.com/gin-gonic/gin"
 )
 
 func gatewayWebsocketService() {
 
 	go gRPC.RegService()
 
-	gin.SetMode(gin.ReleaseMode)
+	http.HandleFunc("/", webSocket.WsServer)
 
-	engine := gin.Default()
+	err := http.ListenAndServe(fmt.Sprintf(":%d", config.GatewayConfig["GatewayServicePort"]), nil)
 
-	engine.GET("/", webSocket.WsServer)
+	if err != nil {
 
-	engine.Run(fmt.Sprintf(":%d", config.GatewayConfig["GatewayServicePort"]))
+		fmt.Println("Error starting server:", err)
+	}
+
+	// gin.SetMode(gin.ReleaseMode)
+
+	// engine := gin.Default()
+
+	// engine.GET("/", webSocket.WsServer)
+
+	// engine.Run(fmt.Sprintf(":%d", config.GatewayConfig["GatewayServicePort"]))
 }
 
 func main() {

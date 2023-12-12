@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-04-27 18:39:35
  * @LastEditors: psq
- * @LastEditTime: 2023-11-29 10:38:25
+ * @LastEditTime: 2023-12-12 16:01:41
  */
 package config
 
@@ -21,11 +21,8 @@ var GatewayConfig = make(map[string]interface{})
 func init() {
 
 	GatewayConfig["GatewayServicePort"] = 20818
-	GatewayConfig["ReadBufferSize"] = 1024
 	GatewayConfig["WriteBufferSize"] = 1024
-	GatewayConfig["MessageCompression"] = true
 	GatewayConfig["HeartbeatTimeout"] = 180
-	GatewayConfig["WebsocketHandshakeTimeout"] = 5
 	GatewayConfig["GRPCServicePort"] = 20819
 	GatewayConfig["ClientIP"] = []string{}
 	GatewayConfig["MessageFormat"] = websocket.TextMessage
@@ -73,17 +70,6 @@ func init() {
 		}
 	}
 
-	// 消息接收缓冲区大小
-	if cnf.Section("gateway").Key("readBufferSize").String() != "" {
-
-		readBufferSize, err := strconv.Atoi(cnf.Section("gateway").Key("readBufferSize").String())
-
-		if err == nil {
-
-			GatewayConfig["ReadBufferSize"] = readBufferSize
-		}
-	}
-
 	// 消息发送缓冲区大小
 	if cnf.Section("gateway").Key("writeBufferSize").String() != "" {
 
@@ -108,22 +94,6 @@ func init() {
 		}
 	}
 
-	// 是否压缩消息包
-	if cnf.Section("gateway").Key("writeBufferSize").String() != "" {
-
-		messageCompression := cnf.Section("gateway").Key("messageCompression").String()
-
-		if messageCompression == "true" {
-
-			GatewayConfig["MessageCompression"] = true
-		}
-
-		if messageCompression == "false" {
-
-			GatewayConfig["MessageCompression"] = false
-		}
-	}
-
 	// 心跳超时时间
 	if cnf.Section("gateway").Key("heartbeatTimeout").String() != "" {
 
@@ -132,17 +102,6 @@ func init() {
 		if err == nil {
 
 			GatewayConfig["HeartbeatTimeout"] = heartbeatTimeout
-		}
-	}
-
-	// 设置ws握手超时时间
-	if cnf.Section("gateway").Key("websocketHandshakeTimeout").String() != "" {
-
-		websocketHandshakeTimeout, err := strconv.Atoi(cnf.Section("gateway").Key("websocketHandshakeTimeout").String())
-
-		if err == nil {
-
-			GatewayConfig["WebsocketHandshakeTimeout"] = websocketHandshakeTimeout
 		}
 	}
 

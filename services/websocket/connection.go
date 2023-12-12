@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-04-24 15:20:00
  * @LastEditors: psq
- * @LastEditTime: 2023-11-30 10:29:58
+ * @LastEditTime: 2023-12-12 14:23:37
  */
 package websocket
 
@@ -45,9 +45,9 @@ func clientHeartbeatCheck(clientID string) {
 
 		time.Sleep(5 * time.Second)
 
-		clientInterface, exists := GatewayClients.Load(clientID)
+		clientInterface, ok := GatewayClients.Load(clientID)
 
-		if !exists {
+		if !ok {
 
 			break
 		}

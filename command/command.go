@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-05-09 10:00:18
  * @LastEditors: psq
- * @LastEditTime: 2023-11-30 16:41:42
+ * @LastEditTime: 2023-12-12 15:56:22
  */
 
 package command
@@ -27,7 +27,7 @@ import (
 
 var (
 	pidFile = "gateway-websocket.pid"
-	version = "1.1.0.1"
+	version = "1.2.0.1"
 )
 
 func getGatewayPID() string {
