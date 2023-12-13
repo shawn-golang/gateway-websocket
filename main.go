@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-04-24 15:14:11
  * @LastEditors: psq
- * @LastEditTime: 2023-12-11 16:31:44
+ * @LastEditTime: 2023-12-13 15:13:24
  */
 package main
 
@@ -42,33 +42,30 @@ func main() {
 
 	args := os.Args[1:]
 
-	if len(args) > 0 {
+	if len(args) <= 0 || len(args) > 1 {
 
-		switch args[0] {
+		goto TIPS
+	}
 
-		case "start":
+	switch args[0] {
 
-			command.StartGateway()
-			return
-		case "stop":
+	case "start":
+		command.StartGateway()
+		return
+	case "stop":
 
-			command.StopGateway()
-			return
-		case "status":
+		command.StopGateway()
+		return
+	case "status":
 
-			command.GatewayStatus()
-			return
-		case "daemon":
+		command.GatewayStatus()
+		return
+	case "daemon":
 
-			gatewayWebsocketService()
-			return
+		gatewayWebsocketService()
+		return
 
-		default:
-
-			goto TIPS
-		}
-
-	} else {
+	default:
 
 		goto TIPS
 	}

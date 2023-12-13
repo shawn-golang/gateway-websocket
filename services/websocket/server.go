@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2022-05-08 14:18:08
  * @LastEditors: psq
- * @LastEditTime: 2023-12-12 16:01:31
+ * @LastEditTime: 2023-12-13 15:13:54
  */
 
 package websocket
@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"gateway-websocket/config"
 	"net/http"
+	"time"
 
 	"github.com/golang-module/carbon"
 	"github.com/google/uuid"
@@ -18,13 +19,13 @@ import (
 )
 
 var (
-	upGrader = websocket.Upgrader{
+	socketSet = websocket.Upgrader{
 		// 设置消息发送缓冲区大小（byte），如果这个值设置得太小，可能会导致服务端在发送大型消息时遇到问题
 		WriteBufferSize: config.GatewayConfig["WriteBufferSize"].(int),
 		// 消息包启用压缩
 		EnableCompression: true,
 		// ws握手超时时间
-		HandshakeTimeout: 5,
+		HandshakeTimeout: 5 * time.Second,
 		// ws握手过程中允许跨域
 		CheckOrigin: func(r *http.Request) bool {
 			return true
@@ -123,6 +124,7 @@ func handleClientMessage(conn *websocket.Conn, clientID string, messageType int,
 	}
 }
 
+//func WsServer(c *gin.Context) {
 func WsServer(w http.ResponseWriter, r *http.Request) {
 
 	defer func() {
@@ -132,7 +134,8 @@ func WsServer(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	// 将 HTTP 连接升级为 WebSocket 连接
-	conn, err := upGrader.Upgrade(w, r, nil)
+	//conn, err := socketSet.Upgrade(c.Writer, c.Request, nil)
+	conn, err := socketSet.Upgrade(w, r, nil)
 
 	if err != nil {
 		return

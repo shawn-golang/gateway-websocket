@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-05-09 10:00:18
  * @LastEditors: psq
- * @LastEditTime: 2023-12-12 15:56:22
+ * @LastEditTime: 2023-12-12 17:14:55
  */
 
 package command
@@ -43,9 +43,7 @@ func getGatewayPID() string {
 
 func GatewayStatus() {
 
-	pid := getGatewayPID()
-
-	if _, err := os.Stat(pid); err == nil {
+	if _, err := os.Stat(getGatewayPID()); err == nil {
 
 		fmt.Println("gateway-websocket service not started.")
 		return

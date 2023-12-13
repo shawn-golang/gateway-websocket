@@ -1,3 +1,9 @@
+<!--
+ * @Author: psq
+ * @Date: 2023-12-11 14:10:31
+ * @LastEditors: psq
+ * @LastEditTime: 2023-12-13 17:18:14
+-->
 # gateway-websocket
 [![Go](https://img.shields.io/badge/Go->=1.17-green)](https://go.dev)
 <!-- [![Release](https://img.shields.io/github/v/release/jefferyjob/go-easy-utils.svg)](https://github.com/jefferyjob/go-easy-utils/releases)
@@ -64,3 +70,7 @@ gateway-websocket在设计之初就考虑到了其他开发语言调用接口的
 | UnBindUid    | client解除绑定Uid | user  |
 | ClientBindUid    | client绑定Uid | user  |
 | GetClientByUid    | 获取client绑定的Uid | user  |
+
+# gateway-client 调用示例
+
+[各语言调用示例请参阅（逐步完善中）](https://github.com/shawn-golang/gateway-websocket/releases)
