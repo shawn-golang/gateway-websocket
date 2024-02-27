@@ -2,18 +2,14 @@
  * @Author: psq
  * @Date: 2023-05-09 10:00:18
  * @LastEditors: psq
- * @LastEditTime: 2023-12-12 17:14:55
+ * @LastEditTime: 2024-02-27 11:42:23
  */
 
 package command
 
 import (
-	"context"
 	"fmt"
 	"gateway-websocket/config"
-	CountGroupPB "gateway-websocket/services/grpc/proto/countgroup"
-	CountOnlineClientPB "gateway-websocket/services/grpc/proto/countonlineclient"
-	CountOnlineUidPB "gateway-websocket/services/grpc/proto/countonlineuid"
 	"io/ioutil"
 	"net"
 	"os"
@@ -22,7 +18,7 @@ import (
 	"strings"
 	"syscall"
 
-	"google.golang.org/grpc"
+	gRPCClient "gateway-websocket/services/client"
 )
 
 var (
@@ -49,7 +45,7 @@ func GatewayStatus() {
 		return
 	}
 
-	conn, err := grpc.Dial(fmt.Sprintf("localhost:%d", config.GatewayConfig["GRPCServicePort"]), grpc.WithInsecure())
+	client, err := gRPCClient.NewGRPCClient(fmt.Sprintf("localhost:%d", config.GatewayConfig["GRPCServicePort"]))
 
 	if err != nil {
 
@@ -57,35 +53,27 @@ func GatewayStatus() {
 		return
 	}
 
-	defer conn.Close()
+	countOnlineUser, countOnlineClient, countOnlineGroup := int32(0), int32(0), int32(0)
 
-	countOnlineUser, countOnlineClient, countOnlineGroup := 0, 0, 0
+	res, err := client.CountOnlineUid()
 
-	usersRequest := &CountOnlineUidPB.CountOnlineUidRequest{}
+	if err == nil {
 
-	usersResponse, usersErr := CountOnlineUidPB.NewCountOnlineUidClient(conn).CountOnlineUid(context.Background(), usersRequest)
-
-	if usersErr == nil {
-
-		countOnlineUser = int(usersResponse.Count)
+		countOnlineUser = res
 	}
 
-	clientRequest := &CountOnlineClientPB.CountOnlineClientRequest{}
+	res, err = client.CountOnlineClient()
 
-	clientResponse, clientErr := CountOnlineClientPB.NewCountOnlineClientClient(conn).CountOnlineClient(context.Background(), clientRequest)
+	if err == nil {
 
-	if clientErr == nil {
-
-		countOnlineClient = int(clientResponse.Count)
+		countOnlineClient = res
 	}
 
-	groupRequest := &CountGroupPB.CountGroupRequest{}
+	res, err = client.CountGroup()
 
-	groupResponse, groupErr := CountGroupPB.NewCountGroupClient(conn).CountGroup(context.Background(), groupRequest)
+	if err == nil {
 
-	if groupErr == nil {
-
-		countOnlineGroup = int(groupResponse.Count)
+		countOnlineGroup = res
 	}
 
 	usage := "----------------------------------------------Gateway-Websocket Status----------------------------------------------------"

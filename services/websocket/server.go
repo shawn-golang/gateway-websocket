@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2022-05-08 14:18:08
  * @LastEditors: psq
- * @LastEditTime: 2023-12-13 15:13:54
+ * @LastEditTime: 2023-12-15 18:52:02
  */
 
 package websocket
@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/gin-gonic/gin"
 	"github.com/golang-module/carbon"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -124,8 +125,8 @@ func handleClientMessage(conn *websocket.Conn, clientID string, messageType int,
 	}
 }
 
-//func WsServer(c *gin.Context) {
-func WsServer(w http.ResponseWriter, r *http.Request) {
+func WsServer(c *gin.Context) {
+	//func WsServer(w http.ResponseWriter, r *http.Request) {
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -134,8 +135,8 @@ func WsServer(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	// 将 HTTP 连接升级为 WebSocket 连接
-	//conn, err := socketSet.Upgrade(c.Writer, c.Request, nil)
-	conn, err := socketSet.Upgrade(w, r, nil)
+	conn, err := socketSet.Upgrade(c.Writer, c.Request, nil)
+	//conn, err := socketSet.Upgrade(w, r, nil)
 
 	if err != nil {
 		return
@@ -162,7 +163,7 @@ func WsServer(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 
 			handleClientDisconnect(clientID)
-
+			continue
 		} else {
 
 			handleClientMessage(conn, clientID, messageType, message)
