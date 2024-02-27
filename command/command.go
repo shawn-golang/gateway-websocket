@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-05-09 10:00:18
  * @LastEditors: psq
- * @LastEditTime: 2024-02-27 11:42:23
+ * @LastEditTime: 2024-02-27 16:02:01
  */
 
 package command
@@ -18,7 +18,7 @@ import (
 	"strings"
 	"syscall"
 
-	gRPCClient "gateway-websocket/services/client"
+	gRPCClient "gateway-websocket/services/grpc"
 )
 
 var (
