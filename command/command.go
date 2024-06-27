@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-05-09 10:00:18
  * @LastEditors: psq
- * @LastEditTime: 2024-02-27 16:02:01
+ * @LastEditTime: 2024-06-13 15:20:58
  */
 
 package command
@@ -149,12 +149,14 @@ func StopGateway() {
 
 	pid, err := strconv.Atoi(getGatewayPID())
 	if err != nil {
+
 		fmt.Println(err)
 		return
 	}
 
 	process, err := os.FindProcess(pid)
 	if err != nil {
+
 		fmt.Println(err)
 		return
 	}

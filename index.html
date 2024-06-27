@@ -5,27 +5,96 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <style>
-        .ws-action, .ws-msg {
-            width: 350px;
-            height: 90vh;
-            overflow: auto;
-            border: 1px solid #666;
-            padding: 10px;
-            border-radius: 20px;
-        }
-        .ws-msg {
-            position: absolute;
-            right: 20px;
-            top: 25px
-        }
-        button {
-            margin-bottom: 10px;
-        }
+        * {
+			padding: 0;
+			margin: 0;
+			box-sizing: border-box;
+		}
+		.container {
+			width: 100%;
+			display: flex;
+			display: -webkit-flex;
+			justify-content: space-around;
+			padding-top: 100px;
+		}
+		.video-box {
+			position: relative;
+			width: 800px;
+			height: 400px;
+		}
+		#remote-video {
+			width: 100%;
+			height: 100%;
+			display: block;
+			object-fit: cover;
+			border: 1px solid #eee;
+			background-color: #F2F6FC;
+		}
+		#local-video {
+			position: absolute;
+			right: 0;
+			bottom: 0;
+			width: 240px;
+			height: 120px;
+			object-fit: cover;
+			border: 1px solid #eee;
+			background-color: #EBEEF5;
+		}
+		.start-button {
+			position: absolute;
+			left: 50%;
+			top: 50%;
+			width: 100px;
+			line-height: 40px;
+			outline: none;
+			color: #fff;
+			background-color: #409eff;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			transform: translate(-50%, -50%);
+		}
+		.logger {
+			width: 100%;
+			position: fixed;
+			bottom: 0;
+			height: 150px;
+			padding: 14px;
+			overflow-y: auto;
+			line-height: 1.5;
+			color: #4fbf40;
+			background-color: #272727;
+		}
+		.logger .error, .error .time {
+			background-color: #DD4A68 !important;
+			color: #fff;
+		}
+		.logger .time {
+			background-color: yellow;
+			padding-left: 10px;
+			margin-right: 5px;
+		}
+		.token {
+			width: 100%;
+			color: #4fbf40;
+			background-color: #272727;
+			font-size: 18px;
+			padding: 10px;
+		}
+		.token .col-12{
+			display: inline-block;
+		}
+		.token input {
+			border-radius: 5px;
+			height: 30px;
+			width: 300px;
+			padding: 5px;
+		}
     </style>
 </head>
 <body>
     <b></b>
-    <div class="ws-action">
+    <div class="container">
         <h4>Client相关操作</h4>
         <button class="broadcastmessage">Client广播消息</button>
         <button class="clientisonline">Client是否在线</button>
@@ -55,6 +124,7 @@
     </div>
     <div class="ws-msg">
     </div>
+    <div class="logger"></div>
 </body>
 <script src="https://cdn.bootcdn.net/ajax/libs/jquery/3.7.1/jquery.js"></script>
 
@@ -351,28 +421,33 @@
 
     var ws = new WebSocket("ws://127.0.0.1:8282");
 
+    const dump = {
+			
+        el: document.querySelector('.logger'),
+        log(msg) {
+            this.addLog(msg);
+        },
+        error(msg) {
+            this.addLog(msg, 'error');
+        },
+        addLog(msg, type = '') {
+            this.el.innerHTML += `<span ${ type ? `class="${type}"` : ''}><a class='time'>${new Date().toLocaleTimeString()} > </a> ${msg}</span><br/>`;
+            this.scrollToBottom();
+        },
+        scrollToBottom() {
+            this.el.scrollTop = this.el.scrollHeight;
+        }
+    };
+
     // 监听收到消息事件
     ws.onmessage = function(event) {
       
-        if (i == 0) {
-            $('b').text('ClientId：'+event.data)
-            i++
-            
-        } else {
-
-            if (event.data != "pong") {
-
-                var d=new Date();
-
-                $('.ws-msg').prepend('<p> 内容：' + event.data + '，时间：' + d.toLocaleString() + '</p>')
-                
-            }
-        }
+        dump.log(event.data)
     };
 
     ws.onclose = function(event) {
 
-        console.log('ws连接已关闭')
+        dump.error('ws连接已断开')
     }
 
     setInterval(function() {

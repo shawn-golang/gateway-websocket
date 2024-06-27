@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-04-24 15:20:00
  * @LastEditors: psq
- * @LastEditTime: 2023-12-12 14:23:37
+ * @LastEditTime: 2024-06-27 15:02:53
  */
 package websocket
 
@@ -59,6 +59,14 @@ func clientHeartbeatCheck(clientID string) {
 			fmt.Println("Client", clientID, "heartbeat timeout")
 
 			client.Conn.Close()
+
+			if client.BindUid != "" {
+
+				clientUnBindUid(client.ID, client.BindUid)
+			}
+
+			clientLeaveGroup(client.ID)
+
 			GatewayClients.Delete(clientID)
 			break
 		}
