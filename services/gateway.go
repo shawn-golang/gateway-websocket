@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-04-24 18:47:27
  * @LastEditors: psq
- * @LastEditTime: 2023-12-15 16:44:45
+ * @LastEditTime: 2024-07-24 11:44:56
  */
 
 package services
@@ -11,6 +11,12 @@ import (
 	"gateway-websocket/config"
 	"gateway-websocket/services/websocket"
 )
+
+/**
+ *  【注意！！！注意！！！注意！！！】
+ *  这里是GatewayWebsocket工具的核心组件库！
+ *  请谨慎修改此处的代码，除非你知道这意味着什么！
+ */
 
 type Gateway struct{}
 

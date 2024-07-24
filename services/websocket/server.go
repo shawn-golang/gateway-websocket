@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2022-05-08 14:18:08
  * @LastEditors: psq
- * @LastEditTime: 2023-12-15 18:52:02
+ * @LastEditTime: 2024-07-24 11:51:25
  */
 
 package websocket
@@ -13,7 +13,6 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/golang-module/carbon"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
@@ -125,8 +124,13 @@ func handleClientMessage(conn *websocket.Conn, clientID string, messageType int,
 	}
 }
 
-func WsServer(c *gin.Context) {
-	//func WsServer(w http.ResponseWriter, r *http.Request) {
+/**
+ * @description: 使用net/http包创建服务根路由
+ * @param {*gin.Context} c
+ * @return {*}
+ */
+//func WsServer(c *gin.Context) {
+func WsServer(w http.ResponseWriter, r *http.Request) {
 
 	defer func() {
 		if err := recover(); err != nil {
@@ -134,9 +138,11 @@ func WsServer(c *gin.Context) {
 		}
 	}()
 
-	// 将 HTTP 连接升级为 WebSocket 连接
-	conn, err := socketSet.Upgrade(c.Writer, c.Request, nil)
-	//conn, err := socketSet.Upgrade(w, r, nil)
+	// 使用gin包将请求升级为 WebSocket 连接
+	//conn, err := socketSet.Upgrade(c.Writer, c.Request, nil)
+
+	// 使用net/http包将请求升级为 WebSocket 连接
+	conn, err := socketSet.Upgrade(w, r, nil)
 
 	if err != nil {
 		return
@@ -152,6 +158,7 @@ func WsServer(c *gin.Context) {
 		return
 	}
 
+	// 创建一个独立的协程监听这个客户端连接，当超过一定时间没有收到心跳请求时服务端主动断开连接
 	go clientHeartbeatCheck(clientID)
 
 	for {
@@ -164,10 +171,9 @@ func WsServer(c *gin.Context) {
 
 			handleClientDisconnect(clientID)
 			continue
-		} else {
-
-			handleClientMessage(conn, clientID, messageType, message)
 		}
+
+		handleClientMessage(conn, clientID, messageType, message)
 	}
 
 }

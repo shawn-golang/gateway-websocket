@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-04-27 18:39:35
  * @LastEditors: psq
- * @LastEditTime: 2023-12-12 16:01:41
+ * @LastEditTime: 2024-07-24 11:53:23
  */
 package config
 
@@ -18,7 +18,15 @@ import (
 
 var GatewayConfig = make(map[string]interface{})
 
+/**
+ * @description: 初始化进程
+ * @return {*}
+ */
 func init() {
+
+	/**
+	 * 初始化时定义服务的配置项
+	 */
 
 	GatewayConfig["GatewayServicePort"] = 20818
 	GatewayConfig["WriteBufferSize"] = 1024

@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-04-24 15:14:11
  * @LastEditors: psq
- * @LastEditTime: 2024-02-27 13:58:17
+ * @LastEditTime: 2024-07-24 11:17:20
  */
 package main
 
@@ -12,31 +12,37 @@ import (
 	"gateway-websocket/config"
 	gRPC "gateway-websocket/services/grpc"
 	webSocket "gateway-websocket/services/websocket"
+	"net/http"
 	"os"
-
-	"github.com/gin-gonic/gin"
 )
 
+/**
+ * @description: 启动GatewayWebsocket服务进程
+ * @return {*}
+ */
 func gatewayWebsocketService() {
 
 	go gRPC.RegService()
 
-	// http.HandleFunc("/", webSocket.WsServer)
+	// 使用net/http包运行socket进程
+	http.HandleFunc("/", webSocket.WsServer)
 
-	// err := http.ListenAndServe(fmt.Sprintf(":%d", config.GatewayConfig["GatewayServicePort"]), nil)
+	err := http.ListenAndServe(fmt.Sprintf(":%d", config.GatewayConfig["GatewayServicePort"]), nil)
 
-	// if err != nil {
+	if err != nil {
 
-	// 	fmt.Println("Error starting server:", err)
-	// }
+		fmt.Println("Error starting server:", err)
+	}
+	// 使用gin包运行socket进程
+	// gin.SetMode(gin.ReleaseMode)
 
-	gin.SetMode(gin.ReleaseMode)
+	// engine := gin.Default()
 
-	engine := gin.Default()
+	// engine.GET("/", webSocket.WsServer)
 
-	engine.GET("/", webSocket.WsServer)
+	// engine.Run(fmt.Sprintf(":%d", config.GatewayConfig["GatewayServicePort"]))
 
-	engine.Run(fmt.Sprintf(":%d", config.GatewayConfig["GatewayServicePort"]))
+	// 上述web包按照你的开发习惯选择其中一种即可，当然你也可以用别的web包
 }
 
 func main() {
