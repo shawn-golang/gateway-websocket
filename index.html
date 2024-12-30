@@ -415,45 +415,60 @@
     })
 </script>
 <script>
-    var i = 0
 
-    var ws = new WebSocket("ws://127.0.0.1:8282");
+    class GatewayWebSocketClient {
+        constructor(socketUrl) {
+            this.ws = new WebSocket(socketUrl);
+            this.ws.onmessage = this.handleMessage.bind(this);
+            this.ws.onclose = this.handleClose.bind(this);
+            this.startPing();
+            this.dumpMsg = {
+                el: document.querySelector('.logger'),
+                log(msg, type = '') {
 
-    const dump = {
-			
-        el: document.querySelector('.logger'),
-        log(msg) {
-            this.addLog(msg);
-        },
-        error(msg) {
-            this.addLog(msg, 'error');
-        },
-        addLog(msg, type = '') {
-            this.el.innerHTML += `<span ${ type ? `class="${type}"` : ''}><a class='time'>${new Date().toLocaleTimeString()} > </a> ${msg}</span><br/>`;
-            this.scrollToBottom();
-        },
-        scrollToBottom() {
-            this.el.scrollTop = this.el.scrollHeight;
+                    this.el.innerHTML += `<span ${type ? `class="${type}"` : ''}><a class='time'>${new Date().toLocaleTimeString()} > </a> ${msg}</span><br/>`;
+                    this.el.scrollTop = this.el.scrollHeight;
+                },
+            }
         }
-    };
+    
+        handleMessage(event) {
 
-    // 监听收到消息事件
-    ws.onmessage = function(event) {
-      
-        dump.log(event.data)
-    };
+            this.dumpMsg.log(`收到内容 ${event.data}`);
+        }
+    
+        handleClose(event) {
 
-    ws.onclose = function(event) {
+            this.dumpMsg.log('ws连接已断开', 'error');
+        }
+    
+        async wait(ms) {
+            
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    
+        async startPing() {
 
-        dump.error('ws连接已断开')
+            while (true) {
+
+                await this.wait(5000);
+
+                if (this.ws.readyState === WebSocket.OPEN) {
+
+                    this.dumpMsg.log(`readyState${this.ws.readyState}, WebSocket.OPEN = ${WebSocket.OPEN}`);
+
+                    this.ws.send('ping');
+                } else {
+                    
+                    this.dumpMsg.log('WebSocket 未处于打开状态，无法发送心跳');
+                }
+            }
+        }
     }
 
-    setInterval(function() {
-
-        if (ws.readyState === WebSocket.OPEN) {
-            ws.send('ping');
-        }
-    }, 15000);
+    (function() {
+        const client = new GatewayWebSocketClient("ws://127.0.0.1:8282");
+    })();
     
 </script>
 </html>

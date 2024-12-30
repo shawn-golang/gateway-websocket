@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-05-09 10:00:18
  * @LastEditors: psq
- * @LastEditTime: 2024-06-13 15:20:58
+ * @LastEditTime: 2024-11-12 14:37:52
  */
 
 package command
@@ -10,6 +10,7 @@ package command
 import (
 	"fmt"
 	"gateway-websocket/config"
+	gRPCClient "gateway-websocket/services/grpc"
 	"io/ioutil"
 	"net"
 	"os"
@@ -17,8 +18,6 @@ import (
 	"strconv"
 	"strings"
 	"syscall"
-
-	gRPCClient "gateway-websocket/services/grpc"
 )
 
 var (

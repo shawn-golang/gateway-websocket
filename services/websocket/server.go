@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2022-05-08 14:18:08
  * @LastEditors: psq
- * @LastEditTime: 2024-07-24 11:51:25
+ * @LastEditTime: 2024-12-30 14:37:48
  */
 
 package websocket
@@ -114,6 +114,8 @@ func handleClientMessage(conn *websocket.Conn, clientID string, messageType int,
 			return
 		}
 
+		fmt.Println("收到客户端", clientID, "发送的心跳")
+
 		GatewayClients.Store(clientID, &WebSocketClientBase{
 			ID:            clientID,
 			Conn:          conn,
@@ -169,8 +171,9 @@ func WsServer(w http.ResponseWriter, r *http.Request) {
 		// 当收到err时则标识客户端连接出现异常，如断线
 		if err != nil {
 
+			conn.Close()
 			handleClientDisconnect(clientID)
-			continue
+			break
 		}
 
 		handleClientMessage(conn, clientID, messageType, message)

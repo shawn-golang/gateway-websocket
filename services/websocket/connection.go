@@ -2,7 +2,7 @@
  * @Author: psq
  * @Date: 2023-04-24 15:20:00
  * @LastEditors: psq
- * @LastEditTime: 2024-06-27 15:02:53
+ * @LastEditTime: 2024-12-30 15:15:15
  */
 package websocket
 
@@ -56,7 +56,7 @@ func clientHeartbeatCheck(clientID string) {
 
 		if (carbon.Now().Timestamp() - client.LastHeartbeat) > int64(HeartbeatTime) {
 
-			fmt.Println("Client", clientID, "heartbeat timeout")
+			fmt.Println("Client", clientID, "心跳超时，最后心跳时间", client.LastHeartbeat)
 
 			client.Conn.Close()
 
